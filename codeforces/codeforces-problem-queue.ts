@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         codeforces-problem-queue
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  You can queue the problems you want to revenge!
 // @author       itohdak
 // @license      MIT
@@ -9,7 +9,7 @@
 // @match        https://codeforces.com/profile/*
 // @grant        none
 // ==/UserScript==
- 
+
 var max_problem_count = 50;
 function getProblemQueue () {
     return JSON.parse(localStorage.getItem('problemQueue') || '{}');
@@ -34,7 +34,7 @@ function deleteProblem (problemTitle) {
     delete problemQueue[problemTitle];
     setProblemQueue(problemQueue);
 }
- 
+
 function setAddProblemButton () {
     // Create a button in a container div.
     var div = document.createElement('div');
@@ -47,25 +47,25 @@ function setAddProblemButton () {
     btn.setAttribute('id', 'addProblemButton');
     div.appendChild(btn);
     document.getElementsByClassName('header')[0].appendChild(div);
- 
+
     // Activate the newly added button.
     document.getElementById('addProblemButton').addEventListener(
         'click', buttonClickAction, false
     );
 }
- 
+
 function buttonClickAction (event) {
     var problemTitle = document.getElementsByClassName('title')[0].innerHTML
     var contestName = document.getElementsByClassName('left')[0].querySelectorAll('a')[0].text
     var msg = addProblem(problemTitle, {'contestName': contestName, 'problemLink': location.href});
- 
+
     var p = document.createElement('p');
     p.innerHTML = '<font color="red">' + msg + '</font>';
     var cntr = document.getElementById('addProblemContainer');
     if(cntr.children.length > 1) cntr.removeChild(cntr.childNodes[1]);
     cntr.appendChild(p);
 }
- 
+
 function createCodeforcesLikeRoundBox () {
     var roundBox = document.createElement('div');
     roundBox.setAttribute('class', 'roundbox sidebox top-contributed');
@@ -88,34 +88,37 @@ function createCodeforcesLikeRoundBox () {
     // roundBox.appendChild(roundBoxRB);
     return roundBox;
 }
- 
+
 function createCodeforcesLikeDeleteButton (problemTitle) {
     var deleteBtn = document.createElement('a');
     deleteBtn.setAttribute('class', 'delete-virtual-contest');
     deleteBtn.setAttribute('title', 'delete [' + problemTitle + ']');
-    // deleteBtn.setAttribute('href', '#');
+    deleteBtn.setAttribute('href', '#');
     var img = document.createElement('img');
     img.setAttribute('width', '12px;');
     img.setAttribute('src', '//sta.codeforces.com/s/!/images/delete.png');
     deleteBtn.appendChild(img);
     return deleteBtn;
 }
- 
+
 function setProblemList () {
+    var userPage = document.getElementsByClassName('avatar')[0].querySelectorAll('a')[1];
+    if(userPage == null || (userPage != location.href && userPage + "#" != location.href)) return;
+
     var roundBox = createCodeforcesLikeRoundBox();
- 
+
     var title = document.createElement('div');
     title.setAttribute('class', 'caption titled');
     title.innerHTML = '→ Problem queue';
     roundBox.appendChild(title);
- 
+
     var table = document.createElement('table');
     table.setAttribute('class', 'rtable ');
     table.setAttribute('id', 'problemQueue');
     roundBox.appendChild(table);
     var tbody = document.createElement('tbody');
     table.appendChild(tbody);
- 
+
     var header = document.createElement('tr');
     var thIdx = document.createElement('th');
     thIdx.textContent = '#';
@@ -125,7 +128,7 @@ function setProblemList () {
     header.appendChild(thPblm);
     header.appendChild(document.createElement('th'));
     tbody.appendChild(header);
- 
+
     var num = 1;
     var problemQueue = getProblemQueue();
     for (let key in problemQueue) {
@@ -137,7 +140,7 @@ function setProblemList () {
         // add problem link
         var tdLink = document.createElement('td');
         if(num%2) tdLink.setAttribute('class', 'dark');
-        tdLink.innerHTML = '<a href="' + problemQueue[key].problemLink + '" title="' + problemQueue[key].contestName + '">' + key + '</a>';
+        tdLink.innerHTML = '<a href="' + problemQueue[key].problemLink + '" title="' + problemQueue[key].contestName + '" target="_blank" rel="noopener noreferrer">' + key + '</a>';
         // add delete button
         var tdBtn = document.createElement('td');
         if(num%2) tdBtn.setAttribute('class', 'dark');
@@ -149,22 +152,22 @@ function setProblemList () {
         num++;
     }
     document.getElementById('pageContent').appendChild(roundBox);
- 
+
     document.querySelectorAll('.delete-virtual-contest').forEach ( (btn) => btn.addEventListener (
         'click', {obj: btn, handleEvent: deleteAction}, false
     ));
 }
- 
+
 function deleteAction (event) {
     var tr = this.obj.parentNode.parentNode;
     var problemTitle = tr.querySelectorAll('a')[0].text;
     deleteProblem(problemTitle);
     tr.parentNode.deleteRow(tr.sectionRowIndex);
 }
- 
+
 (function() {
     var url = window.location.href;
- 
+
     if( url.match(new RegExp('/codeforces.com\/contest\/(.*)\/problem\/(.*)')) != null ) {
         setAddProblemButton();
     } else if ( url.match(new RegExp('/codeforces.com\/profile\/(.*)')) != null) {
